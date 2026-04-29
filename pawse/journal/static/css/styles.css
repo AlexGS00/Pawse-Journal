@@ -1,0 +1,5 @@
+a.nav-link.active {
+  color: #1c1917; /* stone-900 */
+  border-bottom: 1px solid #1c1917;
+  padding-bottom: 1px;
+}
