@@ -3,21 +3,45 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charaset="UTF-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}{% endblock title %}</title>
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-      crossorigin="anonymous"
-    />
-    <link rel="stylesheet" href="{% static "css/styles.css" %}">
+    <title>{% block title %}Pawse{% endblock title %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              serif: ['Lora', 'Georgia', 'serif'],
+            },
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
   </head>
-  <body>
-    <div class="custom-container">
-        {% block body %}{% endblock body %}
-    </div>
+  <body class="bg-stone-50 text-stone-800 min-h-screen font-sans antialiased">
+
+    <nav class="border-b border-stone-200 bg-stone-50/80 backdrop-blur sticky top-0 z-10">
+      <div class="max-w-3xl mx-auto px-6 flex items-center justify-between h-14">
+        <a href="/" class="font-serif text-base italic text-stone-900 tracking-wide">Pawse</a>
+        <div class="flex items-center gap-7 text-sm text-stone-400">
+          <a href="/journal" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_journal %}{% endblock %}">
+            Journal
+          </a>
+          <a href="/chat" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
+            Chat
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-6 py-12">
+      {% block body %}{% endblock body %}
+    </main>
+
   </body>
 </html>
