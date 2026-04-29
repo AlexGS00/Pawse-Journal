@@ -29,12 +29,24 @@
       <div class="max-w-3xl mx-auto px-6 flex items-center justify-between h-14">
         <a href="/" class="font-serif text-base italic text-stone-900 tracking-wide">Pawse</a>
         <div class="flex items-center gap-7 text-sm text-stone-400">
+          {% if request.user.is_authenticated %}{% endif %}
           <a href="/journal" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_journal %}{% endblock %}">
             Journal
           </a>
           <a href="/chat" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
             Chat
           </a>
+          <a href="/logout" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
+            Log Out
+          </a>
+          {% else %}
+          <a href="/register" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
+            Register
+          </a>
+          <a href="/login" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
+            Log In
+          </a>
+          {% endif %}
         </div>
       </div>
     </nav>
