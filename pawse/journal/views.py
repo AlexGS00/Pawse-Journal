@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.contrib.auth.models import User
 from .models import Entry
@@ -46,6 +46,24 @@ def register(request):
         auth_login(request, user)
         return redirect("index")
     return render(request, "journal/register.html")
+
+
+def entry_detail(request, entry_id):
+    entry = get_object_or_404(Entry, id=entry_id, user=request.user)
+    return render(request, "journal/entry_detail.html", {"entry": entry})
+
+
+def edit_entry(request, entry_id):
+    entry = get_object_or_404(Entry, id=entry_id, user=request.user)
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        content = request.POST.get("content", "").strip()
+        if content:
+            entry.title = title
+            entry.content = content
+            entry.save()
+            return redirect("entry_detail", entry_id=entry.id)
+    return render(request, "journal/create_entry.html", {"entry": entry})
 
 
 def create_entry(request):
