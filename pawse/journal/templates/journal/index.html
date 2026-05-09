@@ -1,11 +1,28 @@
 {% extends "journal/layout.html" %}
 {% load static %}
 
-{% block title %}Pawse{% endblock title %}
+{% block title %}Journal — Pawse{% endblock %}
+{% block nav_journal %}active{% endblock %}
 
 {% block body %}
-<div class="space-y-2">
-  <h1 class="font-serif italic text-3xl text-stone-900">Good to see you.</h1>
-  <p class="text-stone-400 text-sm">Start writing, or pick up where you left off.</p>
+<div class="flex items-center justify-between mb-10">
+  <h1 class="font-serif italic text-2xl text-stone-900">Your entries</h1>
+  <a href="{% url 'create_entry' %}"
+     class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150">
+    New entry
+  </a>
 </div>
-{% endblock body %}
+
+{% if entries %}
+  <div class="grid gap-4">
+    {% for entry in entries %}
+      {% include "journal/_entry_card.html" with entry=entry %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-24 text-stone-400">
+    <p class="font-serif italic text-lg mb-1">Nothing here yet.</p>
+    <p class="text-sm">Write your first entry to get started.</p>
+  </div>
+{% endif %}
+{% endblock %}
