@@ -26,34 +26,55 @@
   <body class="bg-stone-50 text-stone-800 min-h-screen font-sans antialiased">
 
     <nav class="border-b border-stone-200 bg-stone-50/80 backdrop-blur sticky top-0 z-10">
-      <div class="max-w-3xl mx-auto px-6 flex items-center justify-between h-14">
-        <a href="/" class="font-serif text-base italic text-stone-900 tracking-wide">Pawse</a>
-        <div class="flex items-center gap-7 text-sm text-stone-400">
-          {% if request.user.is_authenticated %}{% endif %}
-          <a href="/journal" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_journal %}{% endblock %}">
-            Journal
-          </a>
-          <a href="/chat" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
-            Chat
-          </a>
-          <a href="/logout" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
-            Log Out
-          </a>
+      <div class="max-w-3xl mx-auto px-6">
+
+        <!-- Top bar: logo + hamburger -->
+        <div class="flex items-center justify-between h-14">
+          <a href="/" class="font-serif text-base italic text-stone-900 tracking-wide">Pawse</a>
+
+          <!-- Desktop links (hidden on mobile) -->
+          <div class="hidden sm:flex items-center gap-7 text-sm text-stone-400">
+            {% if request.user.is_authenticated %}
+              <a href="/" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_journal %}{% endblock %}">Journal</a>
+              <a href="/chat" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">Chat</a>
+              <a href="/logout" class="nav-link hover:text-stone-800 transition-colors duration-150">Log out</a>
+            {% else %}
+              <a href="/register" class="nav-link hover:text-stone-800 transition-colors duration-150">Register</a>
+              <a href="/login" class="nav-link hover:text-stone-800 transition-colors duration-150">Log in</a>
+            {% endif %}
+          </div>
+
+          <!-- Hamburger button (mobile only) -->
+          <button id="menu-btn" class="sm:hidden text-stone-400 hover:text-stone-800 transition-colors" aria-label="Toggle menu">
+            <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Mobile dropdown -->
+        <div id="mobile-menu" class="hidden sm:hidden pb-4 flex-col gap-4 text-sm text-stone-400">
+          {% if request.user.is_authenticated %}
+            <a href="/" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_journal_mobile %}{% endblock %}">Journal</a>
+            <a href="/chat" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat_mobile %}{% endblock %}">Chat</a>
+            <a href="/logout" class="nav-link hover:text-stone-800 transition-colors duration-150">Log out</a>
           {% else %}
-          <a href="/register" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
-            Register
-          </a>
-          <a href="/login" class="nav-link hover:text-stone-800 transition-colors duration-150 {% block nav_chat %}{% endblock %}">
-            Log In
-          </a>
+            <a href="/register" class="nav-link hover:text-stone-800 transition-colors duration-150">Register</a>
+            <a href="/login" class="nav-link hover:text-stone-800 transition-colors duration-150">Log in</a>
           {% endif %}
         </div>
+
       </div>
     </nav>
 
     <main class="max-w-3xl mx-auto px-6 py-12">
       {% block body %}{% endblock body %}
     </main>
+
+    <script src="{% static 'js/navbar.js' %}"></script>
 
   </body>
 </html>
