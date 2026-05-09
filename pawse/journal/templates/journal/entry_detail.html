@@ -1,0 +1,26 @@
+{% extends "journal/layout.html" %}
+{% load static %}
+
+{% block title %}{{ entry.display_title }} — Pawse{% endblock %}
+{% block nav_journal %}active{% endblock %}
+
+{% block body %}
+<div class="flex items-center justify-between mb-10">
+  <a href="{% url 'index' %}" class="text-xs text-stone-400 hover:text-stone-700 transition-colors">← Journal</a>
+  <a href="{% url 'edit_entry' entry.id %}"
+     class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150">
+    Edit
+  </a>
+</div>
+
+<article class="space-y-6">
+  <div class="space-y-1">
+    <h1 class="font-serif italic text-3xl text-stone-900">{{ entry.display_title }}</h1>
+    <time class="text-xs text-stone-400">{{ entry.created_at|date:"F j, Y" }}</time>
+  </div>
+
+  <div class="border-t border-stone-200"></div>
+
+  <div class="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{{ entry.content }}</div>
+</article>
+{% endblock %}
