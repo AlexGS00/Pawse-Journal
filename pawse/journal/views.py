@@ -11,15 +11,24 @@ def index(request):
 
 def login_view(request):
     if request.method == "POST":
-        user = authenticate(
-            request,
-            username=request.POST.get("username", "").strip(),
-            password=request.POST.get("password", "").strip(),
-        )
+        identifier = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "").strip()
+        
+        username = identifier
+        
+        if "@" in username:
+            try:
+                username = User.objects.get(email__iexact=identifier).username
+            except User.DoesNotExist:
+                username = None
+        
+        user = authenticate(request, username=username, password=password) if username else None
+        
         if user:
             auth_login(request, user)
-            return redirect("index")
-        return render(request, "journal/login.html", {"error_message": "Invalid username or password"})
+            return redirect(index)
+        
+        return render(request, "journal/login.html", {"error_message": "Invalid username/email or password"})
     return render(request, "journal/login.html")
 
 
