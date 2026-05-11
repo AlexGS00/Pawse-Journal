@@ -5,24 +5,42 @@
 {% block nav_journal %}active{% endblock %}
 
 {% block body %}
-<div class="flex items-center justify-between mb-10">
-  <h1 class="font-serif italic text-2xl text-stone-900">Your entries</h1>
-  <a href="{% url 'create_entry' %}"
-     class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150">
-    New entry
-  </a>
-</div>
-
-{% if entries %}
-  <div class="grid gap-4">
-    {% for entry in entries %}
-      {% include "journal/_entry_card.html" with entry=entry %}
-    {% endfor %}
+{% if request.user.is_authenticated %}
+  <div class="flex items-center justify-between mb-10">
+    <h1 class="font-serif italic text-2xl text-stone-900">Your entries</h1>
+    <a href="{% url 'create_entry' %}"
+      class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150">
+      New entry
+    </a>
   </div>
+
+  {% if entries %}
+    <div class="grid gap-4">
+      {% for entry in entries %}
+        {% include "journal/_entry_card.html" with entry=entry %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-24 text-stone-400">
+      <p class="font-serif italic text-lg mb-1">Nothing here yet.</p>
+      <p class="text-sm">Write your first entry to get started.</p>
+    </div>
+  {% endif %}
+
 {% else %}
-  <div class="text-center py-24 text-stone-400">
-    <p class="font-serif italic text-lg mb-1">Nothing here yet.</p>
-    <p class="text-sm">Write your first entry to get started.</p>
+  <div class="text-center py-24 space-y-4">
+    <p class="font-serif italic text-2xl text-stone-900">Start your journal.</p>
+    <p class="text-sm text-stone-400">Create an account or log in to write and read your entries.</p>
+    <div class="flex items-center justify-center gap-3 pt-2">
+      <a href="{% url 'register' %}"
+         class="text-sm px-5 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150">
+        Register
+      </a>
+      <a href="{% url 'login' %}"
+         class="text-sm px-5 py-2 border border-stone-300 text-stone-600 rounded-md hover:border-stone-400 hover:text-stone-800 transition-colors duration-150">
+        Log in
+      </a>
+    </div>
   </div>
 {% endif %}
 {% endblock %}
