@@ -5,22 +5,33 @@
 {% block nav_journal %}active{% endblock %}
 
 {% block body %}
-<div class="flex items-center justify-between mb-10">
-  <a href="{% url 'index' %}" class="text-xs text-stone-400 hover:text-stone-700 transition-colors">← Journal</a>
-  <a href="{% url 'edit_entry' entry.id %}"
-     class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150">
-    Edit
-  </a>
-</div>
-
-<article class="space-y-6">
-  <div class="space-y-1">
-    <h1 class="font-serif italic text-3xl text-stone-900">{{ entry.display_title }}</h1>
-    <time class="text-xs text-stone-400">{{ entry.created_at|date:"F j, Y" }}</time>
+<div>
+  <div class="flex items-center justify-between mb-10 h-full">
+    <a href="{% url 'index' %}" class="text-xs text-stone-400 hover:text-stone-700 transition-colors">← Journal</a>
+    <div class="flex">
+      <a href="{% url 'edit_entry' entry.id %}"
+        class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150 me-1">
+        Edit
+      </a>
+      <button class="text-sm px-4 py-2 bg-stone-800 text-stone-50 rounded-md hover:bg-stone-700 transition-colors duration-150" id="chat-btn">Start chat</button>
+    </div>
   </div>
 
-  <div class="border-t border-stone-200"></div>
+  <div class="content-body flex justify-between">
+    <article class="space-y-6 w-full">
+      <div class="space-y-1">
+        <h1 class="font-serif italic text-3xl text-stone-900">{{ entry.display_title }}</h1>
+        <time class="text-xs text-stone-400">{{ entry.created_at|date:"F j, Y" }}</time>
+      </div>
 
-  <div class="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{{ entry.content }}</div>
-</article>
+      <div class="border-t border-stone-200"></div>
+
+      <div class="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{{ entry.content }}</div>
+    </article>
+    <div id="chatbox" class="chatbox fixed bottom-0 right-0 w-[30vw] h-full bg-red-50" hidden>
+      lalala
+    </div>
+  </div>
+</div>
+  <script src="{% static 'js/chatbox.js' %}"></script>
 {% endblock %}
