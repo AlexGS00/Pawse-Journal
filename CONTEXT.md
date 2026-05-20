@@ -16,8 +16,9 @@ Built as a portfolio project by a high school student. Prioritizes clean, workin
 | Database | Supabase (cloud Postgres) |
 | Vector storage | pgvector (via Supabase) |
 | Frontend | Django templates, Tailwind CSS, vanilla JavaScript |
-| LLM | Gemini (free tier) |
-| Embeddings | Gemini embeddings API (text-embedding-004) |
+| LLM | OpenRouter (OpenAI-compatible API, access to many models) |
+| Embeddings | Gemini embeddings API (text-embedding-004) — OpenRouter does not support embeddings |
+| OCR | OpenRouter vision-capable model (e.g. Llama Vision, Claude) |
 | Auth | Django built-in auth |
 
 **No React.** All interactivity is vanilla JS. Django handles server-side rendering.
@@ -75,8 +76,8 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 1. User fills out entry form (title, body, tags, optional OCR photos)
 2. On save:
    - Entry stored in DB
-   - A short essential-only summary is generated via Gemini and stored on the entry
-   - Entry body is chunked and embedded via Gemini embeddings; vectors stored in pgvector
+   - A short essential-only summary is generated via OpenRouter and stored on the entry
+   - Entry body is chunked and embedded via Gemini embeddings API; vectors stored in pgvector
 3. Entry is always **read-only** in the view page. Editing requires clicking an Edit button which loads the form pre-populated with existing data.
 4. Deleting an entry requires navigating into it and confirming via a "Are you sure?" dialog.
 
@@ -86,7 +87,7 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 
 - Available only during entry creation/editing, not as a standalone feature.
 - User can upload one or more photos of handwritten notes.
-- Each photo is sent to Gemini Vision API for transcription.
+- Each photo is sent to a vision-capable model via OpenRouter for transcription.
 - Transcribed text appears in an **editable textarea** so the user can correct errors before inserting it into the entry body.
 - User can upload multiple photos sequentially, each producing its own correctable textarea.
 - After correction, the text is appended/inserted into the main entry body.
@@ -96,7 +97,7 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 ## AI / RAG Pipeline
 
 ### Embedding Strategy
-- On entry save, the body is chunked (paragraph or fixed-size chunks) and each chunk is embedded via Gemini embeddings API.
+- On entry save, the body is chunked (paragraph or fixed-size chunks) and each chunk is embedded via Gemini embeddings API (text-embedding-004, 768 dimensions). OpenRouter is not used for embeddings.
 - Each chunk is stored as an `EntryChunk` row with its text and vector. No entry-level embedding — all retrieval happens at the chunk level.
 
 ### Context Injection Strategy (Hybrid, RAG-weighted)
@@ -140,7 +141,7 @@ The intent is RAG-first, with the summary as a cheap anchor rather than a domina
 ### Entry Form (Create / Edit)
 - Fields: title, body (textarea), tags.
 - Tag input: shows existing user tags as selectable chips. Next to them, a "Create new tag" option opens an inline input for name + color (hex input or color picker with preset options).
-- OCR section: "Add handwritten photo" button. Each uploaded photo triggers Gemini Vision transcription and renders a correctable textarea. Multiple photos can be added sequentially. Corrected text is inserted into the entry body.
+- OCR section: "Add handwritten photo" button. Each uploaded photo triggers OCR transcription via a vision-capable model on OpenRouter and renders a correctable textarea. Multiple photos can be added sequentially. Corrected text is inserted into the entry body.
 
 ### Chat History
 - Lists all conversations, grouped or sorted by last modified.
