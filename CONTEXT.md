@@ -37,13 +37,18 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 
 ### JournalEntry
 - `title` — string
-- `body` — text
+- `content` — text
 - `user` — FK to User
 - `created_at` — datetime
 - `updated_at` — datetime
 - `tags` — M2M to Tag
-- `embedding` — pgvector field (generated on save, stored in Supabase)
 - `summary` — short AI-generated summary (generated once on save, stored as text — essentials only, used as lightweight context injection)
+
+### EntryChunk
+- `entry` — FK to JournalEntry (CASCADE delete)
+- `chunk_index` — integer, position of chunk within the entry
+- `content` — the chunk's text (needed to inject into AI prompt)
+- `embedding` — pgvector field, 768 dimensions (Gemini text-embedding-004)
 
 ### Tag
 - `name` — string
@@ -92,7 +97,7 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 
 ### Embedding Strategy
 - On entry save, the body is chunked (paragraph or fixed-size chunks) and each chunk is embedded via Gemini embeddings API.
-- Vectors stored in Supabase via pgvector alongside a reference to the parent entry and chunk index.
+- Each chunk is stored as an `EntryChunk` row with its text and vector. No entry-level embedding — all retrieval happens at the chunk level.
 
 ### Context Injection Strategy (Hybrid, RAG-weighted)
 
