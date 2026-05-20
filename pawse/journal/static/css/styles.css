@@ -3,3 +3,11 @@ a.nav-link.active {
   border-bottom: 1px solid #1c1917;
   padding-bottom: 1px;
 }
+
+body.chat-open main {
+  margin-right: 500px;
+}
+
+body.chat-open main article {
+  max-width: 580px;
+}
