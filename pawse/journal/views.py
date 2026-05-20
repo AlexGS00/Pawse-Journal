@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.contrib.auth.models import User
-from .models import Entry
+from .models import Entry, Tag, EntryChunck
+from django.db import transaction
+
+from .ai import embedding_pipeline
 
 
 def index(request):
@@ -69,8 +72,21 @@ def edit_entry(request, entry_id):
         content = request.POST.get("content", "").strip()
         if content:
             entry.title = title
-            entry.content = content
-            entry.save()
+            
+            #check if content was modified
+            if content != entry.content:
+                entry.content = content
+                entry.save()
+                
+                #delete existing embedings for entry
+                EntryChunck.objects.filter(entry=entry).delete()
+                
+                #create new embedings for entry
+                for chunck in embedding_pipeline(entry.content):
+                    EntryChunck.objects.create(entry=entry, chunck_index=chunck["index"], content=chunck["text"], embedding=chunck["embedding"])
+                    
+            else:   
+                entry.save()
             return redirect("entry_detail", entry_id=entry.id)
     return render(request, "journal/create_entry.html", {"entry": entry})
 
@@ -80,6 +96,12 @@ def create_entry(request):
         title = request.POST.get("title", "").strip()
         content = request.POST.get("content", "").strip()
         if content:
-            Entry.objects.create(user=request.user, title=title, content=content)
+            with transaction.atomic():
+                entry = Entry(user=request.user, title=title, content=content)
+                entry.save()
+                
+                for chunck in embedding_pipeline(entry.content):
+                    EntryChunck.objects.create(entry=entry, chunck_index=chunck["index"], content=chunck["text"], embedding=chunck["embedding"]) 
+                
             return redirect("index")
     return render(request, "journal/create_entry.html")
