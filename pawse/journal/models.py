@@ -43,7 +43,7 @@ class Tag(models.Model):
 
 class Conversation(models.Model):
     title = models.CharField(max_length=128, blank=True)
-    original_entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="conversations")
+    original_entry = models.ForeignKey(Entry, on_delete=models.SET_NULL, related_name="conversations", null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conversations")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
