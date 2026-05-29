@@ -1,5 +1,7 @@
 from google import genai
 from django.conf import settings
+from pgvector.django import CosineDistance
+from .models import EntryChunck
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
@@ -54,3 +56,44 @@ def embedding_pipeline(entry: str):
     
     return embeddings
         
+def get_relevant_chunks(query, user, top_k=5):
+    query_embedding = client.models.embed_content(
+        model="models/gemini-embedding-001",
+        contents=query,
+        config={"output_dimensionality" : 768}
+    ).embeddings[0].values
+    
+    chunks = (
+        EntryChunck.objects
+        .filter(entry_user=user)
+        .annotate(distance=CosineDistance("embedding", query_embedding))
+        .order_by('distance')[:top_k]
+    )
+    
+    return chunks
+
+def chat(user_message, history, relevant_chunks, entry_summary=None):
+    context = "\n\n---\n\n".join(chunk.content for chunk in relevant_chunks)
+    
+    system_prompt = f"You are a journaling assistant. Answer based on the user's journal entries. \n\nRelevant journal excerps:\n{context}"
+    
+    if entry_summary:
+        system_prompt += f"\n\nEntry summary:\n{entry_summary}"
+        
+    gemini_history = [
+        {
+            "role" : "model" if msg.role == "assistant" else "user",
+            "parts" : [{"text" : msg.content}]
+        }
+        for msg in history
+    ]
+    
+    conversation = client.chats.create(
+        model="gemini-2.0-flash",
+        history=gemini_history,
+        config={"system_instruction": system_prompt}
+    )
+    
+    response = conversation.send_message(user_message)
+    return response.text
+
