@@ -97,3 +97,9 @@ def chat(user_message, history, relevant_chunks, entry_summary=None):
     response = conversation.send_message(user_message)
     return response.text
 
+def summarize_entry(content:str) -> str:
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents = f"Summarize this journal entry in 2-3 sentences: \n\n{content}"
+    )
+    return response.text

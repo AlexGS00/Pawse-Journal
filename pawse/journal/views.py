@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .models import Entry, Tag, EntryChunck
 from django.db import transaction
 
-from .ai import embedding_pipeline
+from .ai import embedding_pipeline, summarize_entry
 
 
 def index(request):
@@ -76,6 +76,7 @@ def edit_entry(request, entry_id):
             #check if content was modified
             if content != entry.content:
                 entry.content = content
+                entry.summary = summarize_entry(content)
                 entry.save()
                 
                 #delete existing embedings for entry
@@ -98,6 +99,7 @@ def create_entry(request):
         if content:
             with transaction.atomic():
                 entry = Entry(user=request.user, title=title, content=content)
+                entry.summary = summarize_entry(content)
                 entry.save()
                 
                 for chunck in embedding_pipeline(entry.content):
