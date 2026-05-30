@@ -122,3 +122,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECRET_KEY = config("SECRET_KEY")
 
 GEMINI_API_KEY = config("GEMINI_API_KEY")
+OPENROUTER_API_KEY = config("OPENROUTER_API_KEY")
