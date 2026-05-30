@@ -1,0 +1,3 @@
+Add conversation to entry
+create conversations page
+add tags to entrys
