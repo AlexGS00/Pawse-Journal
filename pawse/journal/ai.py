@@ -1,9 +1,17 @@
 from google import genai
+from openai import OpenAI
 from django.conf import settings
 from pgvector.django import CosineDistance
 from .models import EntryChunck
 
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
+gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+openrouter_client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=settings.OPENROUTER_API_KEY
+)
+
+CHAT_MODEL = "google/gemma-4-31b-it:free"
 
 def entry_chunking(entry: str) -> list[str]:
     MIN_CHUNK_SIZE = 300
@@ -34,15 +42,15 @@ def entry_chunking(entry: str) -> list[str]:
                 flush()
                 cur_len = 0
 
-    flush()  # catch anything remaining
+    flush()
     return chunks
 
 def embedding_pipeline(entry: str):
     embeddings = []
     chuncks = entry_chunking(entry)
-    
+
     for i, chunck in enumerate(chuncks):
-        result = client.models.embed_content(
+        result = gemini_client.models.embed_content(
             model="models/gemini-embedding-001",
             contents=chunck,
             config={"output_dimensionality": 768}
@@ -53,53 +61,51 @@ def embedding_pipeline(entry: str):
             "text": chunck,
             "embedding": vector
         })
-    
+
     return embeddings
-        
+
 def get_relevant_chunks(query, user, top_k=5):
-    query_embedding = client.models.embed_content(
+    query_embedding = gemini_client.models.embed_content(
         model="models/gemini-embedding-001",
         contents=query,
-        config={"output_dimensionality" : 768}
+        config={"output_dimensionality": 768}
     ).embeddings[0].values
-    
+
     chunks = (
         EntryChunck.objects
-        .filter(entry_user=user)
+        .filter(entry__user=user)
         .annotate(distance=CosineDistance("embedding", query_embedding))
         .order_by('distance')[:top_k]
     )
-    
+
     return chunks
 
-def chat(user_message, history, relevant_chunks, entry_summary=None):
+def summarize_entry(content: str) -> str:
+    response = openrouter_client.chat.completions.create(
+        model=CHAT_MODEL,
+        messages=[
+            {"role": "user", "content": f"Summarize this journal entry in 2-3 sentences:\n\n{content}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+def chat_stream(user_message, history, relevant_chunks, entry_summary=None):
     context = "\n\n---\n\n".join(chunk.content for chunk in relevant_chunks)
-    
-    system_prompt = f"You are a journaling assistant. Answer based on the user's journal entries. \n\nRelevant journal excerps:\n{context}"
-    
+
+    system_prompt = f"You are a journaling assistant. Answer based on the user's journal entries.\n\nRelevant journal excerpts:\n{context}"
+
     if entry_summary:
         system_prompt += f"\n\nEntry summary:\n{entry_summary}"
-        
-    gemini_history = [
-        {
-            "role" : "model" if msg.role == "assistant" else "user",
-            "parts" : [{"text" : msg.content}]
-        }
-        for msg in history
-    ]
-    
-    conversation = client.chats.create(
-        model="gemini-2.0-flash",
-        history=gemini_history,
-        config={"system_instruction": system_prompt}
-    )
-    
-    response = conversation.send_message(user_message)
-    return response.text
 
-def summarize_entry(content:str) -> str:
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents = f"Summarize this journal entry in 2-3 sentences: \n\n{content}"
+    messages = [{"role": "system", "content": system_prompt}]
+
+    for msg in history:
+        messages.append({"role": msg.role, "content": msg.content})
+
+    messages.append({"role": "user", "content": user_message})
+
+    return openrouter_client.chat.completions.create(
+        model=CHAT_MODEL,
+        messages=messages,
+        stream=True
     )
-    return response.text

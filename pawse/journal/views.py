@@ -1,10 +1,15 @@
+import json
+from django.http import JsonResponse, StreamingHttpResponse
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from .models import Entry, Tag, EntryChunck
+from .models import Entry, Tag, EntryChunck, Conversation, Message
 from django.db import transaction
 
-from .ai import embedding_pipeline, summarize_entry
+
+from .ai import embedding_pipeline, summarize_entry, get_relevant_chunks, chat_stream
 
 
 def index(request):
@@ -107,3 +112,45 @@ def create_entry(request):
                 
             return redirect("index")
     return render(request, "journal/create_entry.html")
+
+@login_required
+@require_POST
+def start_conversation(request, entry_id):
+    entry = get_object_or_404(Entry, id=entry_id, user=request.user)
+    conversation = Conversation.objects.create(
+        title=f"Chat about {entry.display_title()}",
+        user = request.user,
+        original_entry = entry
+    )
+    return JsonResponse({"conversation_id": conversation.id})
+
+@login_required
+@require_POST
+def send_message(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+    user_message = json.loads(request.body).get("message", "").strip()
+    if not user_message:
+        return JsonResponse({"error": "Empty message"}, status=400)
+
+    Message.objects.create(conversation=conversation, role="user", content=user_message)
+
+    history = list(conversation.messages.order_by("created_at"))[:-1]
+    chunks = get_relevant_chunks(user_message, request.user)
+    entry_summary = conversation.original_entry.summary if conversation.original_entry else None
+
+    stream = chat_stream(user_message, history, chunks, entry_summary)
+
+    def event_stream():
+        full_reply = ""
+        for chunk in stream:
+            token = chunk.choices[0].delta.content or ""
+            if token:
+                full_reply += token
+                yield f"data: {json.dumps({'token': token})}\n\n"
+        Message.objects.create(conversation=conversation, role="assistant", content=full_reply)
+        yield f"data: {json.dumps({'done': True})}\n\n"
+
+    response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"
+    return response
