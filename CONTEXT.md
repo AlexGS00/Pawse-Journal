@@ -16,9 +16,9 @@ Built as a portfolio project by a high school student. Prioritizes clean, workin
 | Database | Supabase (cloud Postgres) |
 | Vector storage | pgvector (via Supabase) |
 | Frontend | Django templates, Tailwind CSS, vanilla JavaScript |
-| LLM | OpenRouter (OpenAI-compatible API, access to many models) |
-| Embeddings | Gemini embeddings API (text-embedding-004) — OpenRouter does not support embeddings |
-| OCR | OpenRouter vision-capable model (e.g. Llama Vision, Claude) |
+| LLM | Gemini API free tier — `gemini-2.0-flash` via `google-genai` SDK |
+| Embeddings | Gemini embeddings API — `gemini-embedding-001`, 768 dimensions |
+| OCR | Gemini vision-capable model (TBD) |
 | Auth | Django built-in auth |
 
 **No React.** All interactivity is vanilla JS. Django handles server-side rendering.
@@ -27,7 +27,12 @@ Built as a portfolio project by a high school student. Prioritizes clean, workin
 
 ## Current State
 
-A basic non-AI journal already exists with entry creation and saving functional. The UI has an established vibe: minimal, warm, personal, classy. Do not deviate from this aesthetic.
+- Entry CRUD is fully functional (create, edit, delete, detail view)
+- Embedding pipeline is complete: entries are chunked on save, each chunk embedded with `gemini-embedding-001` and stored as `EntryChunck` rows
+- `summarize_entry()` is implemented in `ai.py` — called on create/edit, result stored in `Entry.summary`
+- `get_relevant_chunks()` and `chat()` functions are written in `ai.py` — RAG retrieval and multi-turn Gemini chat
+- Conversation/Message models exist in the DB; views, URLs, and chat UI are **not yet built**
+- UI has an established vibe: minimal, warm, personal, classy. Do not deviate from this aesthetic.
 
 ---
 
@@ -49,7 +54,9 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 - `entry` — FK to JournalEntry (CASCADE delete)
 - `chunk_index` — integer, position of chunk within the entry
 - `content` — the chunk's text (needed to inject into AI prompt)
-- `embedding` — pgvector field, 768 dimensions (Gemini text-embedding-004)
+- `embedding` — pgvector field, 768 dimensions (gemini-embedding-001)
+
+> Note: model is named `EntryChunck` (with a typo) in the actual code.
 
 ### Tag
 - `name` — string
@@ -58,10 +65,10 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 
 ### Conversation
 - `title` — string (AI-generated on creation, editable by user)
-- `origin_entry` — FK to JournalEntry, nullable (null = standalone chat not tied to an entry)
+- `original_entry` — FK to JournalEntry, **nullable** (`null=True, blank=True, on_delete=SET_NULL`) — null means standalone chat
 - `user` — FK to User
 - `created_at` — datetime
-- `last_modified` — datetime
+- `updated_at` — datetime
 
 ### Message
 - `conversation` — FK to Conversation
@@ -97,8 +104,8 @@ Standard Django user. All data (entries, tags, conversations) is scoped per user
 ## AI / RAG Pipeline
 
 ### Embedding Strategy
-- On entry save, the body is chunked (paragraph or fixed-size chunks) and each chunk is embedded via Gemini embeddings API (text-embedding-004, 768 dimensions). OpenRouter is not used for embeddings.
-- Each chunk is stored as an `EntryChunk` row with its text and vector. No entry-level embedding — all retrieval happens at the chunk level.
+- On entry save, the body is chunked (paragraph or fixed-size chunks) and each chunk is embedded via Gemini embeddings API (`gemini-embedding-001`, 768 dimensions).
+- Each chunk is stored as an `EntryChunck` row with its text and vector. No entry-level embedding — all retrieval happens at the chunk level.
 
 ### Context Injection Strategy (Hybrid, RAG-weighted)
 
@@ -135,7 +142,7 @@ The intent is RAG-first, with the summary as a cheap anchor rather than a domina
 - **Chat Panel**: a button opens a collapsible chat panel on the right side of the screen. The entry content remains visible and readable on the left.
   - The chat panel is a live session. It is not automatically re-opened when returning to the entry.
   - The conversation is saved in the background as messages are sent.
-  - Starting a new chat from an entry always creates a new Conversation with `origin_entry` set.
+  - Starting a new chat from an entry always creates a new Conversation with `original_entry` set.
   - You cannot start a new chat for an entry without leaving the entry first (i.e. one active chat session per entry view at a time).
 
 ### Entry Form (Create / Edit)
@@ -147,7 +154,7 @@ The intent is RAG-first, with the summary as a cheap anchor rather than a domina
 - Lists all conversations, grouped or sorted by last modified.
 - Each conversation shows: title, origin entry (labeled something like "Started from: [entry title]" — or blank if standalone), created date, last modified date.
 - Clicking a conversation opens the full chat view.
-- A dropdown or search allows filtering conversations by origin entry.
+- A dropdown or search allows filtering conversations by original entry.
 - "New Conversation" button → optional: pick an entry as context, or leave blank for standalone.
 
 ### Chat View
