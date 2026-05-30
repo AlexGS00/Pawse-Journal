@@ -16,8 +16,8 @@ Built as a portfolio project by a high school student. Prioritizes clean, workin
 | Database | Supabase (cloud Postgres) |
 | Vector storage | pgvector (via Supabase) |
 | Frontend | Django templates, Tailwind CSS, vanilla JavaScript |
-| LLM | Gemini API free tier — `gemini-2.0-flash` via `google-genai` SDK |
-| Embeddings | Gemini embeddings API — `gemini-embedding-001`, 768 dimensions |
+| LLM | OpenRouter free tier — model set via `CHAT_MODEL` constant in `ai.py`, using `openai` SDK pointed at OpenRouter base URL |
+| Embeddings | Gemini embeddings API — `gemini-embedding-001`, 768 dimensions via `google-genai` SDK |
 | OCR | Gemini vision-capable model (TBD) |
 | Auth | Django built-in auth |
 
@@ -29,9 +29,12 @@ Built as a portfolio project by a high school student. Prioritizes clean, workin
 
 - Entry CRUD is fully functional (create, edit, delete, detail view)
 - Embedding pipeline is complete: entries are chunked on save, each chunk embedded with `gemini-embedding-001` and stored as `EntryChunck` rows
-- `summarize_entry()` is implemented in `ai.py` — called on create/edit, result stored in `Entry.summary`
-- `get_relevant_chunks()` and `chat()` functions are written in `ai.py` — RAG retrieval and multi-turn Gemini chat
-- Conversation/Message models exist in the DB; views, URLs, and chat UI are **not yet built**
+- `summarize_entry()` is implemented in `ai.py` using OpenRouter — called on create/edit, result stored in `Entry.summary`
+- `get_relevant_chunks()` in `ai.py` — RAG retrieval via CosineDistance on EntryChunck embeddings
+- `chat_stream()` in `ai.py` — returns a streaming OpenRouter response (stream=True)
+- Entry-bound chat is fully working: `start_conversation` and `send_message` views wired up, URLs registered
+- `send_message` returns a `StreamingHttpResponse` in SSE format — tokens streamed as `data: {"token": "..."}`, finished with `data: {"done": true}`; full reply saved to DB after streaming completes
+- Chat UI on entry detail page: sliding panel, AJAX/fetch with streaming reader, animated typing indicator while waiting for first token, markdown rendered via `marked.js` on completion
 - UI has an established vibe: minimal, warm, personal, classy. Do not deviate from this aesthetic.
 
 ---
