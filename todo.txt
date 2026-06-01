@@ -1,3 +1,2 @@
-Add conversation to entry
-create conversations page
-add tags to entrys
+X Add conversation to entry
+X create conversations page
