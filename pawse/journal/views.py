@@ -1,4 +1,5 @@
 import json
+from django.db.models import Count
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
@@ -115,6 +116,37 @@ def create_entry(request):
 
 @login_required
 @require_POST
+def start_free_conversation(request):
+    conversation = Conversation.objects.create(
+        title="New conversation",
+        user=request.user,
+    )
+    return redirect("conversation_detail", conversation_id=conversation.id)
+
+
+@login_required
+def chat_index(request):
+    conversations = (
+        Conversation.objects
+        .filter(user=request.user)
+        .annotate(message_count=Count("messages"))
+        .order_by("-updated_at")
+    )
+    return render(request, "journal/chat_index.html", {"conversations": conversations})
+
+
+@login_required
+def conversation_detail(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+    messages = conversation.messages.order_by("created_at")
+    return render(request, "journal/conversation_detail.html", {
+        "conversation": conversation,
+        "messages": messages,
+    })
+
+
+@login_required
+@require_POST
 def start_conversation(request, entry_id):
     entry = get_object_or_404(Entry, id=entry_id, user=request.user)
     conversation = Conversation.objects.create(
@@ -123,6 +155,18 @@ def start_conversation(request, entry_id):
         original_entry = entry
     )
     return JsonResponse({"conversation_id": conversation.id})
+
+@login_required
+@require_POST
+def rename_conversation(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+    new_title = json.loads(request.body).get("title", "").strip()
+    if not new_title:
+        return JsonResponse({"error": "Title cannot be empty"}, status=400)
+    conversation.title = new_title
+    conversation.save()
+    return JsonResponse({"title": conversation.title})
+
 
 @login_required
 @require_POST

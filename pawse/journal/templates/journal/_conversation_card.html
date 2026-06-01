@@ -1,0 +1,22 @@
+<div class="group relative bg-stone-100 border border-stone-200 rounded-lg px-6 py-5 hover:border-stone-300 hover:bg-stone-50 transition-colors duration-150">
+  <a href="{% url 'conversation_detail' conversation.id %}" class="absolute inset-0 rounded-lg" aria-label="{{ conversation.title }}"></a>
+  <div class="flex items-start justify-between gap-4">
+    <h2 class="font-serif italic text-stone-900 text-base leading-snug group-hover:text-stone-700 transition-colors">
+      {{ conversation.title }}
+    </h2>
+    <div class="flex flex-col items-end shrink-0 gap-1">
+      <time class="text-xs text-stone-400">
+        {{ conversation.updated_at|date:"M j, Y" }}
+      </time>
+      {% if conversation.original_entry %}
+        <a href="{% url 'entry_detail' conversation.original_entry.id %}"
+           class="relative z-10 text-xs text-stone-400 hover:text-stone-700 transition-colors">
+          ↗ {{ conversation.original_entry.display_title }}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+  <p class="mt-2 text-sm text-stone-500">
+    {{ conversation.message_count }} message{{ conversation.message_count|pluralize }}
+  </p>
+</div>

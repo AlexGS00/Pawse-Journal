@@ -1,0 +1,80 @@
+{% extends "journal/layout.html" %}
+{% load static %}
+
+{% block title %}{{ conversation.title }} — Pawse{% endblock %}
+{% block nav_chat %}active{% endblock %}
+{% block nav_chat_mobile %}active{% endblock %}
+
+{% block body %}
+<div id="conversation-root"
+     data-conversation-id="{{ conversation.id }}"
+     data-rename-url="{% url 'rename_conversation' conversation.id %}"
+     class="flex flex-col"
+     style="height: calc(100vh - 10rem);">
+
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-6 shrink-0">
+    <div class="space-y-1">
+      <a href="{% url 'chat_index' %}" class="text-xs text-stone-400 hover:text-stone-700 transition-colors">← Chat</a>
+      <div class="flex items-center gap-2">
+        <h1 id="conv-title" class="font-serif italic text-2xl text-stone-900">{{ conversation.title }}</h1>
+        <input id="conv-title-input"
+               type="text"
+               value="{{ conversation.title }}"
+               class="hidden font-serif italic text-2xl text-stone-900 border-b border-stone-400 bg-transparent focus:outline-none focus:border-stone-700 w-64"/>
+        <button id="title-edit-btn" class="text-xs text-stone-400 hover:text-stone-700 transition-colors">Edit title</button>
+        <button id="title-save-btn" class="hidden text-xs text-stone-700 font-medium hover:text-stone-900 transition-colors">Save</button>
+        <button id="title-cancel-btn" class="hidden text-xs text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+      </div>
+    </div>
+    {% if conversation.original_entry %}
+      <a href="{% url 'entry_detail' conversation.original_entry.id %}"
+         class="text-xs text-stone-400 hover:text-stone-700 transition-colors shrink-0 mt-1">
+        ↗ {{ conversation.original_entry.display_title }}
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Messages -->
+  <div id="chat-messages" class="flex-1 overflow-y-auto flex flex-col gap-3 py-2 min-h-0">
+    <div id="chat-empty" class="{% if messages %}hidden{% else %}m-auto text-center px-4{% endif %}">
+      <p class="text-xs text-stone-400 leading-relaxed">No messages yet. Start the conversation below.</p>
+    </div>
+    {% for message in messages %}
+      <div class="flex {% if message.role == 'user' %}justify-end{% else %}justify-start{% endif %}">
+        <div data-role="{{ message.role }}"
+             class="max-w-[80%] px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap
+                    {% if message.role == 'user' %}
+                      bg-stone-800 text-stone-50 rounded-2xl rounded-br-sm
+                    {% else %}
+                      bg-white border border-stone-200 text-stone-800 rounded-2xl rounded-bl-sm
+                    {% endif %}">{{ message.content }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Input -->
+  <div class="border-t border-stone-200 pt-3 mt-3 shrink-0 space-y-2">
+    <div class="flex items-end gap-2">
+      <textarea
+        id="chat-input"
+        rows="1"
+        placeholder="Ask something…"
+        class="flex-1 resize-none overflow-hidden text-sm text-stone-800 bg-white border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-stone-300 placeholder:text-stone-300 leading-relaxed"
+      ></textarea>
+      <button id="chat-send-btn"
+              class="shrink-0 px-3 py-2.5 bg-stone-800 text-stone-50 rounded-lg hover:bg-stone-700 transition-colors duration-150">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+    <p class="text-xs text-stone-400">Enter to send · Shift + Enter for new line</p>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="{% static 'js/chat_core.js' %}"></script>
+<script src="{% static 'js/conversation.js' %}"></script>
+{% endblock %}
