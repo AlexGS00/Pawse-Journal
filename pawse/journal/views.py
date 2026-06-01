@@ -116,6 +116,22 @@ def create_entry(request):
 
 @login_required
 @require_POST
+def delete_conversation(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+    conversation.delete()
+    return redirect("chat_index")
+
+
+@login_required
+@require_POST
+def delete_entry(request, entry_id):
+    entry = get_object_or_404(Entry, id=entry_id, user=request.user)
+    entry.delete()
+    return redirect("index")
+
+
+@login_required
+@require_POST
 def start_free_conversation(request):
     conversation = Conversation.objects.create(
         title="New conversation",
