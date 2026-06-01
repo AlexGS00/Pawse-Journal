@@ -11,7 +11,7 @@ openrouter_client = OpenAI(
     api_key=settings.OPENROUTER_API_KEY
 )
 
-CHAT_MODEL = "google/gemma-4-31b-it:free"
+CHAT_MODEL = "google/gemini-2.0-flash-001"
 
 def entry_chunking(entry: str) -> list[str]:
     MIN_CHUNK_SIZE = 300
