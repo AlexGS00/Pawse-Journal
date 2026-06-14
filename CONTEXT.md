@@ -35,6 +35,11 @@ Built as a portfolio project by a high school student. Prioritizes clean, workin
 - Entry-bound chat is fully working: `start_conversation` and `send_message` views wired up, URLs registered
 - `send_message` returns a `StreamingHttpResponse` in SSE format — tokens streamed as `data: {"token": "..."}`, finished with `data: {"done": true}`; full reply saved to DB after streaming completes
 - Chat UI on entry detail page: sliding panel, AJAX/fetch with streaming reader, animated typing indicator while waiting for first token, markdown rendered via `marked.js` on completion
+- Chat index page (`/chat/`) lists all conversations with a "New conversation" button — creates a standalone Conversation (no entry) with default title "New conversation" via POST to `chat/start/`
+- Conversation title rename is implemented inline on the conversation detail page: clicking "Edit title" makes the `<h1>` editable; saving POSTs to `conversation/<id>/rename/` and updates the DB
+- Delete confirmation modal is a shared component in `layout.html` + `delete_modal.js` — `openDeleteModal(url, label)` sets the message and POSTs to the given URL on confirm; Escape key and backdrop click cancel
+- Delete conversation: button on each conversation card (chat index) and on the conversation detail page header; redirects to chat index after deletion
+- Delete entry: button on each entry card (journal index) and on the entry detail page header; redirects to journal index after deletion
 - UI has an established vibe: minimal, warm, personal, classy. Do not deviate from this aesthetic.
 
 ---
@@ -154,18 +159,19 @@ The intent is RAG-first, with the summary as a cheap anchor rather than a domina
 - OCR section: "Add handwritten photo" button. Each uploaded photo triggers OCR transcription via a vision-capable model on OpenRouter and renders a correctable textarea. Multiple photos can be added sequentially. Corrected text is inserted into the entry body.
 
 ### Chat History
-- Lists all conversations, grouped or sorted by last modified.
-- Each conversation shows: title, origin entry (labeled something like "Started from: [entry title]" — or blank if standalone), created date, last modified date.
-- Clicking a conversation opens the full chat view.
-- A dropdown or search allows filtering conversations by original entry.
-- "New Conversation" button → optional: pick an entry as context, or leave blank for standalone.
+- Lists all conversations sorted by last modified. ✓ implemented
+- Each conversation card shows: title, origin entry link (if bound), date, message count. ✓ implemented
+- "New conversation" button creates a standalone conversation with default title. ✓ implemented
+- Clicking a conversation opens the full chat view. ✓ implemented
+- Delete button on each card opens confirmation modal. ✓ implemented
+- A dropdown or search to filter conversations by origin entry — not yet built.
 
 ### Chat View
-- Shows full message history.
-- Input to continue the conversation.
-- Link to origin entry if applicable.
-- Edit conversation title inline.
-- Delete conversation button with confirmation dialog.
+- Shows full message history with markdown rendering. ✓ implemented
+- Input to continue the conversation (SSE streaming). ✓ implemented
+- Link to origin entry if applicable. ✓ implemented
+- Edit conversation title inline ("Edit title" button → editable h1 → "Save" POSTs to rename endpoint). ✓ implemented
+- Delete conversation button with confirmation modal. ✓ implemented
 
 ### Auth Pages
 - Register, Login, Logout — standard Django auth flow.
